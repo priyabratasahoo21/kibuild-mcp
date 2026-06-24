@@ -82,7 +82,15 @@ Run the install command for your platform:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/priyabratasahoo21/kibuild-mcp/main/install.sh | sh
 ```
-*Installs to `/usr/local/bin/kibuild-mcp`.*
+*Installs to `/usr/local/bin/kibuild-mcp`. The script auto-detects your OS and architecture, and removes the macOS Gatekeeper quarantine flag automatically.*
+
+> **No `curl`?** The script falls back to `wget` automatically.
+
+> **macOS — if the binary is still blocked** after install, run:
+> ```bash
+> xattr -d com.apple.quarantine /usr/local/bin/kibuild-mcp
+> ```
+> Then allow it once in **System Settings → Privacy & Security** if prompted.
 
 **Windows (PowerShell):**
 ```powershell
@@ -105,16 +113,23 @@ Go to the [Releases page](https://github.com/priyabratasahoo21/kibuild-mcp/relea
 |---|---|
 | macOS (Apple Silicon) | `kibuild-mcp-darwin-arm64` |
 | macOS (Intel) | `kibuild-mcp-darwin-amd64` |
-| Linux | `kibuild-mcp-linux-amd64` |
+| Linux (x86_64) | `kibuild-mcp-linux-amd64` |
+| Linux (ARM64) | `kibuild-mcp-linux-arm64` |
 | Windows | `kibuild-mcp-windows-amd64.exe` |
 
 Move it to a folder on your PATH:
 
 - **macOS / Linux:**
   ```bash
-  chmod +x kibuild-mcp-darwin-arm64
-  mv kibuild-mcp-darwin-arm64 /usr/local/bin/kibuild-mcp
+  # Replace with your actual downloaded filename
+  chmod +x kibuild-mcp-*
+  sudo mv kibuild-mcp-* /usr/local/bin/kibuild-mcp
   ```
+  > **macOS Gatekeeper:** After moving, remove the quarantine flag so MCP clients can spawn the binary:
+  > ```bash
+  > xattr -d com.apple.quarantine /usr/local/bin/kibuild-mcp
+  > ```
+  > If you still see a security prompt, allow it in **System Settings → Privacy & Security**.
 - **Windows (PowerShell):**
   ```powershell
   mkdir "$env:LOCALAPPDATA\Programs\kibuild-mcp"
@@ -122,7 +137,8 @@ Move it to a folder on your PATH:
   [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\kibuild-mcp", "User")
   ```
 
-> On macOS, the first time you run it you may need to allow it in **System Settings → Privacy & Security**.
+> **On macOS, the first time you run it** you may need to allow it in **System Settings → Privacy & Security**.
+> To avoid the prompt entirely, run: `xattr -d com.apple.quarantine /usr/local/bin/kibuild-mcp`
 
 ---
 
@@ -134,6 +150,11 @@ Requires Go 1.21 or later.
 go install github.com/priyabratasahoo21/kibuild-mcp@latest
 ```
 *This places `kibuild-mcp` in your `$GOPATH/bin` (typically `~/go/bin`), which should be in your PATH.*
+
+> **macOS:** After `go install`, also run:
+> ```bash
+> xattr -d com.apple.quarantine ~/go/bin/kibuild-mcp
+> ```
 
 ---
 
