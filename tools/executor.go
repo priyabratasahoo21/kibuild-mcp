@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/priyabratasahoo21/kibuild-mcp/exploder"
 	"github.com/priyabratasahoo21/kibuild-mcp/outbox"
 	"github.com/priyabratasahoo21/kibuild-mcp/providers"
 	"github.com/priyabratasahoo21/kibuild-mcp/validator"
@@ -201,6 +202,40 @@ func ExecuteTool(ctx context.Context, name string, argsJSON string) (string, err
 		res, err := validator.ValidateXML(args.XmlContent, projectPath, args.Database)
 		if err != nil {
 			return "", err
+		}
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			return "", err
+		}
+		return string(resBytes), nil
+
+	case "explode_xml_export":
+		var args struct {
+			Source   string `json:"source"`
+			Database string `json:"database"`
+			Dest     string `json:"dest"`
+		}
+		if err := json.Unmarshal([]byte(argsJSON), &args); err != nil {
+			return "", fmt.Errorf("invalid arguments: %v", err)
+		}
+		if args.Source == "" {
+			return "", fmt.Errorf("source is required (path to a FileMaker 'Save a Copy as XML' file or split-catalog folder)")
+		}
+		source := args.Source
+		if !filepath.IsAbs(source) {
+			source = filepath.Join(projectPath, source)
+		}
+		// Default destination is <project>/files, so the exploded tree lands at
+		// <project>/files/Schema/<db>/ — the layout the indexing tools read.
+		dest := args.Dest
+		if dest == "" {
+			dest = filepath.Join(projectPath, "files")
+		} else if !filepath.IsAbs(dest) {
+			dest = filepath.Join(projectPath, dest)
+		}
+		res, err := exploder.Explode(source, args.Database, dest, SanitizeFMXmlSnippet)
+		if err != nil {
+			return fmt.Sprintf("explode failed: %v", err), nil
 		}
 		resBytes, err := json.Marshal(res)
 		if err != nil {

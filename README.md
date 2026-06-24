@@ -49,18 +49,21 @@ The server indexes an **exploded** schema folder — one XML file *per object*, 
 | Source | Output | Ready to index? |
 |---|---|---|
 | KiBuild plugin **Export Schema** | Exploded tree, one file per object | ✅ Directly |
-| Built-in **DDR** export | One `FMPReport` document for the whole solution | After exploding |
-| **Save a Copy as XML** — single file | One XML document for the whole solution | After exploding |
-| **Save a Copy as XML** — per-catalog option | One file per *catalog* (`Scripts.xml`, `Layouts.xml`, `BaseTables.xml`, …) | After exploding |
+| Built-in **DDR** export | One `FMPReport` document for the whole solution | Not yet supported |
+| **Save a Copy as XML** — single file | One `FMSaveAsXML` document for the whole solution | ✅ Via `explode_xml_export` |
+| **Save a Copy as XML** — per-catalog option | One file per *catalog* (`<DB>_ScriptCatalog.xml`, `<DB>_LayoutCatalog.xml`, `<DB>_BaseTableCatalog.xml`, …) | ✅ Via `explode_xml_export` |
 
-FileMaker 2025/2026's native **Save a Copy as XML** (available as both a menu command and a script step, configured via JSON options) is a convenient, license-friendly way to get schema XML out without the plugin. Its `per catalog` option writes a separate file for each catalog into a destination folder.
+FileMaker 2025/2026's native **Save a Copy as XML** (available as both a menu command and a script step, configured via JSON options) is a convenient, license-friendly way to get schema XML out without the plugin. It emits the `FMSaveAsXML` dialect either as one document, or — with the `per catalog` option — as one `<DB>_<Catalog>Catalog.xml` file per catalog in a destination folder.
 
-The catch: **per-catalog is not per-object.** Even with the split enabled, *all* scripts are still combined inside a single `Scripts.xml`, all layouts inside `Layouts.xml`, and so on — FileMaker does not explode each script into its own file. The indexing tools here expect one file per object, so a Save-as-XML export still has to be exploded into the per-object folder layout above before `generate_schema_map` can index it. You have two options for that step:
+The catch: **per-catalog is not per-object.** Even with the split enabled, *all* scripts stay combined inside a single `ScriptCatalog`, all layouts inside `LayoutCatalog`, and so on — FileMaker does not explode each script into its own file, while the indexing tools here expect one file per object.
 
-- **KiBuild plugin Export Schema** — produces the exploded per-object tree directly, no extra step.
-- **A community exploder** — tools such as *FM-XML-Export-Exploder* dissect the native `Scripts.xml` / catalog files into individual per-script, per-layout, and per-custom-function files (also handy for Git diffing).
+The built-in **`explode_xml_export`** tool closes that gap. Point it at either form (the single `FMSaveAsXML` file or the split-catalog folder — it auto-detects) and it writes the per-object layout the indexer needs, then run `generate_schema_map`:
 
-Direct ingestion of monolithic Save-as-XML or per-catalog files (without an explode step) is not yet supported by this server.
+```
+Explode the Save-as-XML export at /path/to/Contacts.xml into my project, then build the schema map.
+```
+
+> **Coverage:** `explode_xml_export` currently explodes the **scripts** catalog into `scripts/*.xml` + `scripts_sanitized/*.txt` (full script-analysis and reference tools work). Layouts, base tables, and relationships are not exploded yet — for those, use the KiBuild plugin's Export Schema, or a community tool such as *FM-XML-Export-Exploder*, until support lands.
 
 ---
 
@@ -303,6 +306,7 @@ Any tool name listed there is excluded from `tools/list` and blocked at call tim
 | `validate_fmxmlsnippet` | Run 7-rule structural validation on a generated FMXML snippet and return a pass/fail report with details. |
 | `validate_webviewer_html` | Check generated WebViewer HTML for remote dependencies, risky JavaScript APIs, FileMaker bridge usage, and bundle size. |
 | `write_outbox_artifact` | Save a generated script, layout, or document to the project outbox as a versioned artifact with a manifest entry. |
+| `explode_xml_export` | Explode a FileMaker **Save a Copy as XML** export (single `FMSaveAsXML` file or split-catalog folder — auto-detected) into the per-object schema layout. Writes `scripts/<name>.xml` + `scripts_sanitized/<name>.txt` under `Schema/<database>/`; run `generate_schema_map` afterward. |
 
 ### Specialist skills
 

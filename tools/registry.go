@@ -790,6 +790,28 @@ func GetToolsSchema() []providers.Tool {
 
 	allTools = append(allTools,
 		providers.Tool{
+			Name:        "explode_xml_export",
+			Description: "Explode a FileMaker 'Save a Copy as XML' export into the per-object schema layout the navigation and reference tools index. Accepts either a single FMSaveAsXML file (split_catalogs=False) or a folder of split *Catalog.xml files (split_catalogs=True). Writes scripts/<name>.xml and scripts_sanitized/<name>.txt under <dest>/Schema/<database>/. Run generate_schema_map afterward to index the result.",
+			Parameters: json.RawMessage(`{
+				"type": "object",
+				"properties": {
+					"source": {
+						"type": "string",
+						"description": "Path to the FileMaker XML export: either a single FMSaveAsXML .xml file or a folder containing split per-catalog files (e.g. Contacts_ScriptCatalog.xml). Absolute, or relative to the active project."
+					},
+					"database": {
+						"type": "string",
+						"description": "Target database name for the exploded Schema/<database>/ folder. Inferred from the source file/folder name when omitted."
+					},
+					"dest": {
+						"type": "string",
+						"description": "Optional destination root. Defaults to <project>/files so output lands at <project>/files/Schema/<database>/."
+					}
+				},
+				"required": ["source"]
+			}`),
+		},
+		providers.Tool{
 			Name:        "load_skill",
 			Description: "Load the full instruction content of a specialist skill by its ID (e.g. 'pro_scriptwriter', 'script_analysis', 'fm_xml_serializer', 'script_debug'). Injects FileMaker-specific guidance into AI context for the current task.",
 			Parameters: json.RawMessage(`{
@@ -852,6 +874,7 @@ var safeMCPTools = map[string]bool{
 	"validate_fmxmlsnippet":                     true,
 	"validate_webviewer_html":                   true,
 	"write_outbox_artifact":                     true,
+	"explode_xml_export":                        true,
 	"get_active_context":                        true,
 	"read_xml_guide":                            true,
 	"load_skill":                                true,
