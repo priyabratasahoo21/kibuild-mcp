@@ -2,7 +2,7 @@ package tools
 
 import (
 	"encoding/json"
-	"kibuild/mcp/providers"
+	"github.com/priyabratasahoo21/kibuild-mcp/providers"
 )
 
 func GetToolsSchema() []providers.Tool {

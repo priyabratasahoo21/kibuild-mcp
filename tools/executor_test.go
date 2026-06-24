@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"kibuild/mcp/providers"
+	"github.com/priyabratasahoo21/kibuild-mcp/providers"
 )
 
 func TestExecutorFilesystemTools(t *testing.T) {

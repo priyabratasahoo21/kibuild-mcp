@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"kibuild/mcp/config"
-	"kibuild/mcp/providers"
-	"kibuild/mcp/skills"
-	"kibuild/mcp/tools"
+	"github.com/priyabratasahoo21/kibuild-mcp/config"
+	"github.com/priyabratasahoo21/kibuild-mcp/providers"
+	"github.com/priyabratasahoo21/kibuild-mcp/skills"
+	"github.com/priyabratasahoo21/kibuild-mcp/tools"
 )
 
 var cfgManager *config.Manager

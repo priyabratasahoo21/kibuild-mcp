@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"kibuild/mcp/outbox"
-	"kibuild/mcp/providers"
-	"kibuild/mcp/validator"
+	"github.com/priyabratasahoo21/kibuild-mcp/outbox"
+	"github.com/priyabratasahoo21/kibuild-mcp/providers"
+	"github.com/priyabratasahoo21/kibuild-mcp/validator"
 )
 
 func ExecuteTool(ctx context.Context, name string, argsJSON string) (string, error) {

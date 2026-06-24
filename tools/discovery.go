@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"kibuild/mcp/skills"
+	"github.com/priyabratasahoo21/kibuild-mcp/skills"
 )
 
 var (
