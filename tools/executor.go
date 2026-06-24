@@ -421,25 +421,6 @@ func ExecuteTool(ctx context.Context, name string, argsJSON string) (string, err
 		}
 		return ValidateWebViewerHTML(args.HTML, args.AllowRemoteAssets)
 
-	case "run_script":
-		var args struct {
-			ScriptName string `json:"script_name"`
-			Parameter  string `json:"parameter"`
-		}
-		if err := json.Unmarshal([]byte(argsJSON), &args); err != nil {
-			return "", fmt.Errorf("invalid arguments: %v", err)
-		}
-		return RunScript(args.ScriptName, args.Parameter)
-
-	case "execute_sql":
-		var args struct {
-			Query string `json:"query"`
-		}
-		if err := json.Unmarshal([]byte(argsJSON), &args); err != nil {
-			return "", fmt.Errorf("invalid arguments: %v", err)
-		}
-		return ExecuteSQL(args.Query)
-
 	case "find_layout_references_to_scripts":
 		var args struct {
 			Names    []string `json:"names"`

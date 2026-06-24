@@ -2,7 +2,7 @@
 
 A self-contained MCP server that gives any AI coding tool deep, read-level access to a Claris FileMaker schema — no FileMaker license required at runtime for schema analysis.
 
-Register one binary in your MCP config. Your AI tool (Claude Code, Cursor, Windsurf, VS Code) immediately gains FileMaker-aware tools: script navigation, impact analysis across the full dependency graph, XML generation and validation, specialist skills, and live FileMaker execution when the KiBuild plugin is connected.
+Register one binary in your MCP config. Your AI tool (Claude Code, Cursor, Windsurf, VS Code) immediately gains FileMaker-aware tools: script navigation, impact analysis across the full dependency graph, XML generation and validation, and specialist skills.
 
 ---
 
@@ -19,9 +19,6 @@ Extract and list script steps from XML, validate generated FMXML snippets agains
 
 ### Specialist skills
 Load curated FileMaker skill prompts (`pro_scriptwriter`, `script_analysis`, `fm_xml_serializer`, `script_debug`) directly into AI context to inject domain-specific guidance for writing, analyzing, or debugging scripts.
-
-### Live FileMaker execution (optional)
-When the KiBuild C++ plugin is running and connected, `run_script` and `execute_sql` execute against the active FileMaker database over IPC. All other 34 tools work without FileMaker running.
 
 ---
 
@@ -75,36 +72,49 @@ Explode the Save-as-XML export at /path/to/Contacts.xml into my project, then bu
 
 ## Installation
 
-### Option 1 — Download a release binary (recommended)
+### Step 1 — Get the binary
 
-1. Go to the [Releases page](https://github.com/priyabratasahoo21/kibuild-mcp/releases) and download the binary for your platform:
+**Option A — Download a release binary (recommended)**
 
-   | Platform | File |
-   |---|---|
-   | macOS (Apple Silicon) | `kibuild-mcp-darwin-arm64` |
-   | macOS (Intel) | `kibuild-mcp-darwin-amd64` |
-   | Linux | `kibuild-mcp-linux-amd64` |
-   | Windows | `kibuild-mcp-windows-amd64.exe` |
+Go to the [Releases page](https://github.com/priyabratasahoo21/kibuild-mcp/releases) and download the binary for your platform:
 
-2. Make it executable and move it to your PATH:
+| Platform | File |
+|---|---|
+| macOS (Apple Silicon) | `kibuild-mcp-darwin-arm64` |
+| macOS (Intel) | `kibuild-mcp-darwin-amd64` |
+| Linux | `kibuild-mcp-linux-amd64` |
+| Windows | `kibuild-mcp-windows-amd64.exe` |
 
-   ```bash
-   # macOS / Linux
-   chmod +x kibuild-mcp-darwin-arm64
-   mv kibuild-mcp-darwin-arm64 /usr/local/bin/kibuild-mcp
-   ```
+Then move it to a permanent location on your PATH:
 
-   On macOS you may need to allow the binary in **System Settings → Privacy & Security** the first time you run it.
+**macOS / Linux:**
+```bash
+chmod +x kibuild-mcp-darwin-arm64
+mv kibuild-mcp-darwin-arm64 /usr/local/bin/kibuild-mcp
+```
+The binary now lives at `/usr/local/bin/kibuild-mcp`. Use this path in your MCP config below.
 
-### Option 2 — Homebrew (macOS / Linux)
+> On macOS, the first time you run it you may need to allow it in **System Settings → Privacy & Security**.
+
+**Windows:**
+```powershell
+# Create a folder for CLI tools if you don't have one
+mkdir "$env:LOCALAPPDATA\Programs\kibuild-mcp"
+Move-Item kibuild-mcp-windows-amd64.exe "$env:LOCALAPPDATA\Programs\kibuild-mcp\kibuild-mcp.exe"
+# Add to PATH (run once, then restart your terminal)
+[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:LOCALAPPDATA\Programs\kibuild-mcp", "User")
+```
+The binary lives at `%LOCALAPPDATA%\Programs\kibuild-mcp\kibuild-mcp.exe`. Use this full path in your MCP config below.
+
+**Option B — Homebrew (macOS / Linux)**
 
 ```bash
 brew install kibuild/tap/kibuild-mcp
 ```
 
-> Homebrew tap coming soon. Watch the repository for the release.
+> Homebrew tap coming soon.
 
-### Option 3 — Build from source
+**Option C — Build from source**
 
 Requires Go 1.21 or later.
 
@@ -115,45 +125,27 @@ go build -o kibuild-mcp .
 mv kibuild-mcp /usr/local/bin/
 ```
 
-### Option 4 — Install script
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/priyabratasahoo21/kibuild-mcp/main/install.sh | bash
-```
-
-> Install script coming soon.
-
 ---
 
 ## Setup
 
-### Step 1 — Point the binary at your project
+### Step 2 — Register in your AI tool
 
-**Option A — Environment variable** (recommended for MCP configs):
+Pick your tool below. Paste the snippet into the config file shown, replacing `/path/to/your/project` with the absolute path to your FileMaker project folder.
 
-```json
-"env": { "KIBUILD_ACTIVE_PROJECT": "/path/to/your/project" }
-```
+> **Where is my project folder?** It's the folder that contains (or will contain) your `files/Schema/` export. The same path you would pass to `generate_schema_map`.
 
-**Option B — Active project file**:
-
-```bash
-mkdir -p ~/.fm_ai_bridge
-echo "/path/to/your/project" > ~/.fm_ai_bridge/active_project.txt
-```
-
-### Step 2 — Register in your AI tool's MCP config
+---
 
 #### Claude Code
 
-Add to `~/.claude.json`:
+Config file: `~/.claude.json`
 
 ```json
 {
   "mcpServers": {
     "kibuild": {
       "command": "/usr/local/bin/kibuild-mcp",
-      "args": [],
       "env": {
         "KIBUILD_ACTIVE_PROJECT": "/path/to/your/project"
       }
@@ -161,17 +153,67 @@ Add to `~/.claude.json`:
   }
 }
 ```
+
+> **Windows path:** use `"command": "C:\\Users\\<YourName>\\AppData\\Local\\Programs\\kibuild-mcp\\kibuild-mcp.exe"`
+
+After editing, restart Claude Code (or run `/mcp` to reload servers).
+
+---
+
+#### OpenAI Codex CLI
+
+Config file: `~/.codex/config.toml` (global) or `.codex/config.toml` in your repo (project-scoped)
+
+```toml
+[mcp_servers.kibuild]
+command = "/usr/local/bin/kibuild-mcp"
+
+[mcp_servers.kibuild.env]
+KIBUILD_ACTIVE_PROJECT = "/path/to/your/project"
+```
+
+> **Windows path:** use `command = 'C:\Users\<YourName>\AppData\Local\Programs\kibuild-mcp\kibuild-mcp.exe'`
+
+Or add it via the CLI:
+```bash
+codex mcp add kibuild -- /usr/local/bin/kibuild-mcp
+```
+Then open `~/.codex/config.toml` and add the `KIBUILD_ACTIVE_PROJECT` env var manually.
+
+---
+
+#### Google Antigravity (Agy)
+
+Config file: `~/.gemini/config/mcp_config.json`
+
+```json
+{
+  "mcpServers": {
+    "kibuild": {
+      "command": "/usr/local/bin/kibuild-mcp",
+      "env": {
+        "KIBUILD_ACTIVE_PROJECT": "/path/to/your/project"
+      }
+    }
+  }
+}
+```
+
+Create the folder if it doesn't exist: `mkdir -p ~/.gemini/config`
+
+This config is shared across Agy CLI, Antigravity IDE, and all other Antigravity tools.
+
+---
 
 #### Cursor
 
-Add to `~/.cursor/mcp.json`:
+Config file: `~/.cursor/mcp.json`
 
 ```json
 {
   "mcpServers": {
     "kibuild": {
       "command": "/usr/local/bin/kibuild-mcp",
-      "args": [],
       "env": {
         "KIBUILD_ACTIVE_PROJECT": "/path/to/your/project"
       }
@@ -179,17 +221,18 @@ Add to `~/.cursor/mcp.json`:
   }
 }
 ```
+
+---
 
 #### Windsurf
 
-Add to `~/.codeium/windsurf/mcp_config.json`:
+Config file: `~/.codeium/windsurf/mcp_config.json`
 
 ```json
 {
   "mcpServers": {
     "kibuild": {
       "command": "/usr/local/bin/kibuild-mcp",
-      "args": [],
       "env": {
         "KIBUILD_ACTIVE_PROJECT": "/path/to/your/project"
       }
@@ -198,16 +241,17 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 }
 ```
 
+---
+
 #### VS Code (with MCP extension)
 
-Add to your VS Code `settings.json`:
+Config file: User `settings.json` (`Ctrl+Shift+P` → "Open User Settings JSON")
 
 ```json
 {
   "mcp.servers": {
     "kibuild": {
       "command": "/usr/local/bin/kibuild-mcp",
-      "args": [],
       "env": {
         "KIBUILD_ACTIVE_PROJECT": "/path/to/your/project"
       }
@@ -216,15 +260,17 @@ Add to your VS Code `settings.json`:
 }
 ```
 
+---
+
 ### Step 3 — Build the workspace index
 
-Ask your AI tool to call `generate_schema_map`. This scans the schema folder and writes `workspace_map.md` to your project root — after that, `search_index` and all navigation tools are live.
+Once the server is registered, ask your AI tool:
 
 ```
 Call generate_schema_map for my project at /path/to/your/project
 ```
 
-The index auto-refreshes whenever schema files change.
+This scans your `files/Schema/` folder and writes `workspace_map.md` to your project root. After that, all navigation and reference tools are live. The index auto-refreshes whenever schema files change.
 
 ---
 
@@ -250,20 +296,6 @@ Show me the relationships for the Contacts table occurrence.
 ```
 Validate this FMXML snippet before I import it.
 ```
-
----
-
-## Disabling specific tools
-
-Add a `kibuild_config.json` file to `~/.fm_ai_bridge/`:
-
-```json
-{
-  "disabled_mcp_tools": ["run_script", "execute_sql"]
-}
-```
-
-Any tool name listed there is excluded from `tools/list` and blocked at call time.
 
 ---
 
@@ -320,15 +352,6 @@ Any tool name listed there is excluded from `tools/list` and blocked at call tim
 |---|---|
 | `load_skill` | Load a specialist skill by ID into AI context. Available skills: `pro_scriptwriter` (FileMaker scripting patterns), `script_analysis` (structured script audit), `fm_xml_serializer` (valid FMXML generation rules), `script_debug` (systematic debugging approach). |
 
-### Live FileMaker execution — requires KiBuild plugin
-
-These tools require FileMaker to be open with the KiBuild plugin loaded. They gracefully error when the plugin is absent without affecting the other 34 tools.
-
-| Tool | Description |
-|---|---|
-| `run_script` | Run a FileMaker script by name, with an optional parameter. |
-| `execute_sql` | Execute an `ExecuteSQL` query against the active database and return results. |
-
 ---
 
 ## Logging
@@ -351,11 +374,8 @@ AI tool (Claude Code, Cursor, Windsurf, VS Code)
 kibuild-mcp  ← this binary
   │  MCP JSON-RPC over stdin/stdout (protocol 2024-11-05)
   │
-  ├── analysis tools  ← read Schema/ XML files on disk
-  │     works with no FileMaker running
-  │
-  └──  2 live-exec tools  ← IPC → KiBuild C++ Plugin → FileMaker
-        requires FileMaker open + KiBuild plugin loaded
+  └── analysis tools  ← read Schema/ XML files on disk
+        works without FileMaker running
 
 Reads from disk:
   ~/your-project/files/Schema/<DBName>/   ← exported schema (XML files)

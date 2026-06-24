@@ -383,42 +383,6 @@ func GetToolsSchema() []providers.Tool {
 			}`),
 		},
 		{
-			Name:        "run_script",
-			Description: "Run a FileMaker script by name, optionally passing a parameter.",
-			Parameters: json.RawMessage(`{
-				    "type": "object",
-				    "properties": {
-				        "script_name": {
-				            "type": "string",
-				            "description": "Name of the script to run"
-				        },
-				        "parameter": {
-				            "type": "string",
-				            "description": "Optional parameter to pass to the script"
-				        }
-				    },
-				    "required": [
-				        "script_name"
-				    ]
-				}`),
-		},
-		{
-			Name:        "execute_sql",
-			Description: "Execute a FileMaker ExecuteSQL query against the active database.",
-			Parameters: json.RawMessage(`{
-				    "type": "object",
-				    "properties": {
-				        "query": {
-				            "type": "string",
-				            "description": "The SQL query to execute"
-				        }
-				    },
-				    "required": [
-				        "query"
-				    ]
-				}`),
-		},
-		{
 			Name:        "find_layout_references_to_scripts",
 			Description: "Find references related to layout names",
 			Parameters: json.RawMessage(`{
@@ -841,8 +805,6 @@ func GetToolsSchema() []providers.Tool {
 }
 
 var safeMCPTools = map[string]bool{
-	"run_script":                                true,
-	"execute_sql":                               true,
 	"find_layout_references_to_scripts":         true,
 	"find_layout_references_to_valuelists":      true,
 	"find_layout_references_to_tables":          true,

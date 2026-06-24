@@ -142,49 +142,12 @@ func ExportSchema(dbName string) (string, error) {
 	return resStr, nil
 }
 
-func RunScript(scriptName string, parameter string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	params := map[string]string{
-		"script_name": scriptName,
-		"parameter":   parameter,
-	}
-	result, err := CallPlugin(ctx, "run_script", params)
-	if err != nil {
-		return "", err
-	}
-
-	var resStr string
-	if err := json.Unmarshal(result, &resStr); err != nil {
-		return string(result), nil
-	}
-	return resStr, nil
-}
-
 func ReadLayout(layoutName string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	params := map[string]string{"layout_name": layoutName}
 	result, err := CallPlugin(ctx, "read_layout", params)
-	if err != nil {
-		return "", err
-	}
-
-	var resStr string
-	if err := json.Unmarshal(result, &resStr); err != nil {
-		return string(result), nil
-	}
-	return resStr, nil
-}
-
-func ExecuteSQL(query string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	params := map[string]string{"query": query}
-	result, err := CallPlugin(ctx, "execute_sql", params)
 	if err != nil {
 		return "", err
 	}

@@ -19,6 +19,20 @@ import (
 var cfgManager *config.Manager
 
 func main() {
+	// When run directly in a terminal (not spawned by an MCP client), print usage and exit.
+	if fi, err := os.Stdin.Stat(); err == nil && (fi.Mode()&os.ModeCharDevice != 0) {
+		fmt.Fprintln(os.Stderr, "kibuild-mcp — FileMaker MCP server")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "This binary is an MCP server. It is not run directly.")
+		fmt.Fprintln(os.Stderr, "Register it in your AI tool's MCP config, then your AI tool will spawn it automatically.")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "Example (Claude Code, ~/.claude.json):")
+		fmt.Fprintln(os.Stderr, `  "mcpServers": { "kibuild": { "command": "/usr/local/bin/kibuild-mcp", "env": { "KIBUILD_ACTIVE_PROJECT": "/path/to/project" } } }`)
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "See https://github.com/priyabratasahoo21/kibuild-mcp for setup instructions.")
+		os.Exit(0)
+	}
+
 	var err error
 	cfgManager, err = config.NewManager("")
 	if err != nil {
