@@ -1,0 +1,1 @@
+<Step enable="True" id="1" name="Perform Script"><Script name="{{.ScriptName}}"></Script>{{if .Calculation}}<Parameter><Calculation><![CDATA[{{.Calculation}}]]></Calculation></Parameter>{{end}}</Step>

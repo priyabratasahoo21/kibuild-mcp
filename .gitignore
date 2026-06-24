@@ -1,0 +1,24 @@
+# Compiled binaries
+kibuild-mcp
+kibuild-mcp-*
+dist/
+
+# Go build artifacts
+*.test
+*.out
+
+# macOS
+.DS_Store
+
+# Runtime files written by the server
+*.log
+workspace_map.md
+
+# Local config (may contain paths or secrets)
+kibuild_config.json
+
+# KiBuild index cache (generated at runtime)
+.kibuild_index/
+
+# Outbox (generated artifacts)
+outbox/

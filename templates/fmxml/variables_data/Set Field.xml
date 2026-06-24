@@ -1,0 +1,1 @@
+<Step enable="True" id="76" name="Set Field"><Calculation><![CDATA[{{.Calculation}}]]></Calculation>{{if .TargetTable}}<Field name="{{.TargetField}}" table="{{.TargetTable}}"></Field>{{else}}{{if .TargetField}}<Field name="{{.TargetField}}"></Field>{{end}}{{end}}</Step>

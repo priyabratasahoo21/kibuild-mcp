@@ -1,0 +1,1 @@
+<Step enable="True" id="79" name="Go to Related Record">{{if .LayoutName}}<LayoutReference name="{{.LayoutName}}"></LayoutReference>{{end}}</Step>

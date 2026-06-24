@@ -1,0 +1,1 @@
+<Step enable="True" id="6" name="Go to Layout">{{if .LayoutName}}<LayoutReference name="{{.LayoutName}}"></LayoutReference>{{else}}<Calculation><![CDATA[{{.Calculation}}]]></Calculation>{{end}}</Step>

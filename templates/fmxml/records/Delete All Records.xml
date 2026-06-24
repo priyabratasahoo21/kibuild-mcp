@@ -1,0 +1,1 @@
+<Step enable="True" id="10" name="Delete All Records"><NoInteract state="{{if .NoInteract}}True{{else}}False{{end}}"></NoInteract></Step>
