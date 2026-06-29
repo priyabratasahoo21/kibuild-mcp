@@ -75,7 +75,14 @@ irm https://raw.githubusercontent.com/priyabratasahoo21/kibuild-mcp/main/install
 > Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 > ```
 
-The installer downloads the binary, runs `kibuild-mcp --setup` to configure your AI tool's MCP config, and installs AI guide files globally.
+The installer downloads the binary and installs the `/setup-kibuild` slash command for Claude Code. It then runs `kibuild-mcp --setup` interactively to write the MCP server config. If the interactive prompt is unavailable (e.g. piped execution in a CI or AI agent context), finish setup by running `kibuild-mcp --setup` in your terminal directly, or write the config manually — see [Configure for your AI tool](#configure-for-your-ai-tool).
+
+**Verify the binary installed correctly before continuing:**
+```bash
+kibuild-mcp --version
+# Expected output: v0.2.0 or higher
+# If this fails, the binary is not in PATH — see Troubleshooting
+```
 
 ---
 
@@ -156,9 +163,42 @@ Claude reads the project guide and runs the full setup wizard automatically. No 
 
 ## Configure for your AI tool
 
-The setup wizard handles Claude Code automatically. For other tools, add the MCP server entry manually. Replace `/path/to/your/project` with the absolute path to your FileMaker project folder.
+The `kibuild-mcp --setup` wizard handles Claude Code automatically when run in a terminal. To write the config directly — for example, when an AI agent is driving the installation — use the commands below. Replace `/path/to/your/project` with the absolute path to your FileMaker project folder.
 
 ### Claude Code
+
+**macOS / Linux** — write config with one command:
+```bash
+python3 -c "
+import json, pathlib
+p = pathlib.Path.home() / '.claude.json'
+c = json.loads(p.read_text()) if p.exists() else {}
+c.setdefault('mcpServers', {})['kibuild'] = {
+    'command': '/usr/local/bin/kibuild-mcp',
+    'env': {'KIBUILD_ACTIVE_PROJECT': '/path/to/your/project'}
+}
+p.write_text(json.dumps(c, indent=2))
+print('Written to', p)
+"
+```
+
+**Windows** — write config with PowerShell:
+```powershell
+$p = "$env:USERPROFILE\.claude.json"
+$c = if (Test-Path $p) { Get-Content $p -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
+if (-not $c.PSObject.Properties['mcpServers']) {
+    $c | Add-Member -NotePropertyName mcpServers -NotePropertyValue ([pscustomobject]@{})
+}
+$c.mcpServers | Add-Member -NotePropertyName kibuild -NotePropertyValue @{
+    command = "$env:LOCALAPPDATA\Programs\kibuild-mcp\kibuild-mcp.exe"
+    env     = @{ KIBUILD_ACTIVE_PROJECT = "C:\path\to\your\project" }
+} -Force
+$c | ConvertTo-Json -Depth 10 | Set-Content $p -Encoding UTF8
+Write-Host "Written to $p"
+```
+
+<details>
+<summary>Reference: raw JSON structure</summary>
 
 **macOS / Linux** — `~/.claude.json`
 ```json
@@ -187,8 +227,9 @@ The setup wizard handles Claude Code automatically. For other tools, add the MCP
   }
 }
 ```
+</details>
 
-After editing, restart Claude Code or run `/mcp` to reload.
+After writing the config, **fully quit and restart your AI tool** — the MCP client does not hot-reload.
 
 ---
 
@@ -226,32 +267,38 @@ Config file: `~/.codeium/windsurf/mcp_config.json`
 
 ### OpenAI Codex CLI
 
-Config file: `~/.codex/config.toml`
-```toml
+Config file: `~/.codex/config.toml` — append with one command:
+```bash
+mkdir -p ~/.codex && cat >> ~/.codex/config.toml << 'EOF'
+
 [mcp_servers.kibuild]
 command = "/usr/local/bin/kibuild-mcp"
 
 [mcp_servers.kibuild.env]
 KIBUILD_ACTIVE_PROJECT = "/path/to/your/project"
+EOF
 ```
+
+Verify it was written: `cat ~/.codex/config.toml`
 
 ---
 
 ### Google Antigravity (Agy)
 
-Config file: `~/.gemini/config/mcp_config.json`
-```json
-{
-  "mcpServers": {
-    "kibuild": {
-      "command": "/usr/local/bin/kibuild-mcp",
-      "env": { "KIBUILD_ACTIVE_PROJECT": "/path/to/your/project" }
-    }
-  }
+Config file: `~/.gemini/config/mcp_config.json` — write with one command:
+```bash
+mkdir -p ~/.gemini/config && python3 -c "
+import json, pathlib
+p = pathlib.Path.home() / '.gemini/config/mcp_config.json'
+c = json.loads(p.read_text()) if p.exists() else {}
+c.setdefault('mcpServers', {})['kibuild'] = {
+    'command': '/usr/local/bin/kibuild-mcp',
+    'env': {'KIBUILD_ACTIVE_PROJECT': '/path/to/your/project'}
 }
+p.write_text(json.dumps(c, indent=2))
+print('Written to', p)
+"
 ```
-
-Create the folder if needed: `mkdir -p ~/.gemini/config`
 
 ---
 
@@ -268,6 +315,60 @@ User `settings.json` — open via `Ctrl+Shift+P` → "Open User Settings JSON"
   }
 }
 ```
+
+---
+
+## Verify installation
+
+Run these checks in order after writing the config. All three must pass before the MCP server is live.
+
+### 1 — Binary
+
+```bash
+kibuild-mcp --version
+# Must print: v0.2.0 or higher
+```
+
+If missing: reinstall from Step 1. If present but below v0.2.0: reinstall — `explode_xml_export` and `generate_schema_map` are absent in older builds.
+
+### 2 — Config written correctly
+
+```bash
+# macOS / Linux
+python3 -c "
+import json, pathlib
+c = json.loads((pathlib.Path.home() / '.claude.json').read_text())
+kibuild = c.get('mcpServers', {}).get('kibuild', {})
+print('command:', kibuild.get('command', 'MISSING'))
+print('project:', kibuild.get('env', {}).get('KIBUILD_ACTIVE_PROJECT', 'MISSING'))
+"
+```
+
+```powershell
+# Windows
+$c = Get-Content "$env:USERPROFILE\.claude.json" | ConvertFrom-Json
+$c.mcpServers.kibuild
+```
+
+Both `command` and `KIBUILD_ACTIVE_PROJECT` must be present and non-empty.
+
+### 3 — MCP server running (after restarting your AI tool)
+
+**Restart your AI tool completely** (close all windows, reopen) — the MCP client spawns the server process on startup, not on config write.
+
+Then check the server log:
+```bash
+# macOS / Linux
+tail -5 ~/.fm_ai_bridge/mcp_server.log
+# Expected: last line contains "kibuild-mcp started"
+
+# Windows
+Get-Content "$env:USERPROFILE\.fm_ai_bridge\mcp_server.log" -Tail 5
+```
+
+In Claude Code, run `/mcp` — you should see `kibuild` listed with **32 tools**. If fewer than 30 tools appear, the binary is outdated — reinstall from Step 1, then fully restart.
+
+For Codex, Cursor, Windsurf, and Gemini: call any KiBuild tool (e.g. `search_index` with a keyword from your project) — a successful response confirms the server is live.
 
 ---
 
@@ -378,7 +479,7 @@ Common causes: binary path mismatch in config, Gatekeeper blocking on macOS, PAT
 
 ## Tool count reference
 
-KiBuild MCP exposes **32 tools**. If you see fewer than 28, the binary is likely outdated — run `kibuild-mcp --setup` to self-update, then fully restart Claude Code.
+KiBuild MCP exposes **32 tools**. If you see fewer than 30, the binary is likely outdated — run `kibuild-mcp --setup` to self-update, then fully restart Claude Code.
 
 ---
 
